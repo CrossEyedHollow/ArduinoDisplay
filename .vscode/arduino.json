@@ -1,0 +1,6 @@
+{
+    "sketch": "graphicstest\\graphicstest.ino",
+    "port": "COM3",
+    "board": "arduino:avr:uno",
+    "programmer": "AVR ISP"
+}
