@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
+#include "Stopwatch.cpp"
 
 // For the Adafruit shield, these are the default.
 #define TFT_CS 7
@@ -21,6 +22,8 @@
 #define sensorPin 2
 
 int sensor = 0;
+Stopwatch sw;
+String displayLines[10];
 
 // Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
 //Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
@@ -30,6 +33,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_R
 void setup() 
 {
   // Initialize
+  sw = Stopwatch();
   Serial.begin(9600);
   pinMode(sensorPin, INPUT);
 
@@ -38,28 +42,55 @@ void setup()
   
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
-}
 
-void loop(void) 
-{
-  unsigned long start = millis();
+  // Start counting time
+  sw.Start();
 
-  sensor = digitalRead(sensorPin);
-  testText();
-  delay(50);
-}
-unsigned long testText() 
-{
-  unsigned long start = micros();
-  //Clear
+  // Set constant text
   tft.setCursor(0, 0);
   tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 
   tft.setTextSize(3);
-  tft.print("Time  start: ");
-  tft.print(millis()/1000); tft.println("s");
-  tft.print("Sensor: ");
-  tft.println((sensor == 1) ? "HIGH" : "LOW ");
-  
-  return micros() - start;
+
+  displayLines[0] = "Time: ";
+  displayLines[1] = "Sensor: ";
+
+  for (int i = 0; i < displayLines->length(); i++)
+  {
+    if (displayLines[i] != NULL && displayLines->length() > 0)
+    {
+      tft.println(displayLines[i]);
+    }
+  }
 }
+
+void loop(void) 
+{
+  // Read sensor state
+  sensor = digitalRead(sensorPin);
+  // Display
+  testText();
+
+  // Rest
+  delay(50);
+}
+
+void SetCursorAfter(int lineNumber, int size = 3)
+{
+  int ySize = 8 * size;
+  int xSize = 6 * size;
+  int posY = ySize * lineNumber;
+  int posX = displayLines[lineNumber].length() * xSize;
+  tft.setCursor(posX, posY);
+}
+
+unsigned long testText() 
+{
+  //Clear
+  SetCursorAfter(0);
+  tft.print(sw.Elapsed()/1000); tft.println("s ");
+  SetCursorAfter(1);
+  tft.println((sensor == 1) ? "HIGH" : "LOW ");
+}
+
+
