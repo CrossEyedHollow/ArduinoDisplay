@@ -1,3 +1,5 @@
+
+
 /***************************************************
   This is our GFX example for the Adafruit ILI9341 Breakout and Shield
   ----> http://www.adafruit.com/products/1651
@@ -11,6 +13,7 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include "Stopwatch.cpp"
+#include <Vector.h>
 
 // For the Adafruit shield, these are the default.
 #define TFT_CS 7
@@ -20,11 +23,13 @@
 #define TFT_CLK 11
 #define TFT_MISO 12 
 #define sensorPin 2
+typedef Vector<String> Lines;
+
 
 int sensor = 0;
 Stopwatch sw;
-String displayLines[10];
-
+String arrLines[2];
+Lines lines;
 // Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
 //Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 // If using the breakout, change pins as desired
@@ -34,6 +39,8 @@ void setup()
 {
   // Initialize
   sw = Stopwatch();
+  lines.setStorage(arrLines);
+
   Serial.begin(9600);
   pinMode(sensorPin, INPUT);
 
@@ -52,14 +59,14 @@ void setup()
 
   tft.setTextSize(3);
 
-  displayLines[0] = "Time: ";
-  displayLines[1] = "Sensor: ";
+  lines.push_back("Time: ");
+  lines.push_back("Sensor: ");
 
-  for (int i = 0; i < displayLines->length(); i++)
+  for (String line : lines)
   {
-    if (displayLines[i] != NULL && displayLines->length() > 0)
+    if (line != NULL && line.length() > 0)
     {
-      tft.println(displayLines[i]);
+      tft.println(line);
     }
   }
 }
@@ -68,6 +75,7 @@ void loop(void)
 {
   // Read sensor state
   sensor = digitalRead(sensorPin);
+
   // Display
   testText();
 
@@ -80,7 +88,7 @@ void SetCursorAfter(int lineNumber, int size = 3)
   int ySize = 8 * size;
   int xSize = 6 * size;
   int posY = ySize * lineNumber;
-  int posX = displayLines[lineNumber].length() * xSize;
+  int posX = lines[lineNumber].length() * xSize;
   tft.setCursor(posX, posY);
 }
 
@@ -88,9 +96,7 @@ unsigned long testText()
 {
   //Clear
   SetCursorAfter(0);
-  tft.print(sw.Elapsed()/1000); tft.println("s ");
+  tft.print(sw.Elapsed()/1000); tft.println("s");
   SetCursorAfter(1);
   tft.println((sensor == 1) ? "HIGH" : "LOW ");
 }
-
-

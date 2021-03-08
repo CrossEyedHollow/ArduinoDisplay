@@ -7,6 +7,8 @@
                 "USBCON"
             ],
             "includePath": [
+                "C:\\Users\\ayron\\Documents\\Arduino\\libraries\\Vector\\src",
+                "C:\\Users\\ayron\\Documents\\Arduino\\libraries\\Adafruit_ILI9341-master",
                 "${workspaceRoot}",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/SPI/src",
