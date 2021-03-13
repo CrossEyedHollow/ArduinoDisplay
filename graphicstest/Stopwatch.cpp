@@ -40,6 +40,11 @@ public:
     {
         return (stopped) ? (stopTime - startTime) : (millis() - startTime);
     }
+
+    bool IsRunning()
+    {
+        return !stopped;
+    }
 };
 
 

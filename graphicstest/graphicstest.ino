@@ -25,20 +25,29 @@
 #define sensorPin 2
 typedef Vector<String> Lines;
 
+// Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
 
-int sensor = 0;
-Stopwatch sw;
+int sensorLastValue = 0;
+int sensor = -1;
+int rCount = 0;
+unsigned int rpm = 0;
+
+Stopwatch runtimeSW;
+Stopwatch counterSW;
+Stopwatch displaySW;
 String arrLines[2];
 Lines lines;
-// Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
-//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-// If using the breakout, change pins as desired
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+
 
 void setup() 
 {
   // Initialize
-  sw = Stopwatch();
+  runtimeSW = Stopwatch();
+  counterSW = Stopwatch();
+  displaySW = Stopwatch();
+  runtimeSW.Start();
+  displaySW.Start();
   lines.setStorage(arrLines);
 
   Serial.begin(9600);
@@ -50,17 +59,13 @@ void setup()
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
 
-  // Start counting time
-  sw.Start();
-
   // Set constant text
   tft.setCursor(0, 0);
   tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-
   tft.setTextSize(3);
 
-  lines.push_back("Time: ");
-  lines.push_back("Sensor: ");
+  lines.push_back("Runtime: ");
+  lines.push_back("RPM: ");
 
   for (String line : lines)
   {
@@ -75,12 +80,37 @@ void loop(void)
 {
   // Read sensor state
   sensor = digitalRead(sensorPin);
+  
+  if (sensor == 0 && sensor != sensorLastValue)
+  {
+    rCount++;
 
-  // Display
-  testText();
+    if (!counterSW.IsRunning())
+    {
+      counterSW.Start();
+      Serial.println("RPM Counter Started!");
+    }
+  }
+    // Update last value
+    sensorLastValue = sensor;
 
-  // Rest
-  delay(50);
+  if (counterSW.Elapsed() >= 3000)
+  {
+      rpm = (rCount/(float)(counterSW.Elapsed()/1000))*60;
+      Serial.print("counted: "); Serial.println(rCount);
+      rCount = 0;
+      counterSW.Restart();
+
+      UpdateDisplayRPM();
+  }
+
+  if (displaySW.Elapsed() >= 1000)
+  {
+    UpdateDisplayTime();
+    displaySW.Restart();
+  }
+
+  delay(5);
 }
 
 void SetCursorAfter(int lineNumber, int size = 3)
@@ -92,11 +122,14 @@ void SetCursorAfter(int lineNumber, int size = 3)
   tft.setCursor(posX, posY);
 }
 
-unsigned long testText() 
+void UpdateDisplayTime() 
 {
-  //Clear
   SetCursorAfter(0);
-  tft.print(sw.Elapsed()/1000); tft.println("s");
+  tft.print(runtimeSW.Elapsed()/1000); tft.println("s");
+}
+
+void UpdateDisplayRPM() 
+{
   SetCursorAfter(1);
-  tft.println((sensor == 1) ? "HIGH" : "LOW ");
+  tft.print(rpm); tft.println("   ");
 }
